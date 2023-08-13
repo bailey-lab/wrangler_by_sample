@@ -1,10 +1,11 @@
 configfile: 'wrangler_by_sample.yaml'
 nested_output=config['output_folder']+'/'+config['analysis_dir']
 good_samples=[line.strip() for line in open(nested_output+'/successfully_extracted_samples.txt')]
-all_targets=[line.strip().split('\t')[0] for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')]
+all_targets=[line.strip().split('\t')[0] for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')][1:]
 rule all:
 	input:
-		pop_clustered=expand(nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt', target=all_targets)
+		pop_clustered=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
+#		pop_clustered=expand(nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt', target=all_targets)
 #		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
 #		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
 #		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
@@ -19,7 +20,7 @@ rule mip_barcode_correction:
 		sif_file=config['miptools_sif']
 	resources:
 		mem_mb=20000,
-		time_min=2400
+		time_min=20
 	output:
 		barcode_corrections_finished=nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
 	shell:
@@ -86,11 +87,12 @@ rule pop_cluster_target:
 		mem_mb=16000,
 		time_min=60,
 	output:
-		pop_clustered=nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt'
+		pop_clustering=nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt'
 	shell:
 		'''
 		singularity exec \
 		-B {params.wrangler_dir}:/opt/analysis \
 		{params.sif_file} \
-		MIPWrangler mipPopulationClustering --masterDir {params.output_dir} --overWriteDirs --cutoff 0 --countEndGaps --fraccutoff 0.005 --mipName {wildcards.target}
+		MIPWrangler mipPopulationClustering --keepIntermediateFiles --masterDir {params.output_dir} --overWriteDirs --cutoff 0 --countEndGaps --fraccutoff 0.005 --mipName {wildcards.target}
+		touch {output.pop_clustering}
 		'''
