@@ -1,78 +1,96 @@
 configfile: 'wrangler_by_sample.yaml'
 nested_output=config['output_folder']+'/'+config['analysis_dir']
-good_samples=nested_output+'/successfully_extracted_samples.txt'
-
+good_samples=[line.strip() for line in open(nested_output+'/successfully_extracted_samples.txt')]
+all_targets=[line.strip().split('\t')[0] for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')]
 rule all:
 	input:
-		population_output='/path/to/final/allInfo.tab.txt'
-		
-rule mip_barcode_correction_multiple:
-	output:
-		correction_finished=nested_output+'/correction_finished.txt'
+		pop_clustered=expand(nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt', target=all_targets)
+#		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
+#		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
+#		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
+#		population_output='/path/to/final/allInfo.tab.txt'
+
+rule mip_barcode_correction:
+	input:
+		good_samples=nested_output+'/successfully_extracted_samples.txt'
 	params:
 		output_dir='/opt/analysis/analysis',
 		wrangler_dir=nested_output,
-		sif_file=config['miptools_sif'],
-	threads: config['cpu_count']
+		sif_file=config['miptools_sif']
+	resources:
+		mem_mb=20000,
+		time_min=2400
+	output:
+		barcode_corrections_finished=nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
 	shell:
 		'''
 		singularity exec \
 		-B {params.wrangler_dir}:/opt/analysis \
 		{params.sif_file} \
-		MIPWrangler mipBarcodeCorrectionMultiple --keepIntermediateFiles --masterDir {params.output_dir} --numThreads {threads} --overWriteDirs --overWriteLog --logFile mipBarcodeCorrecting_run1 --allowableErrors 6
-		touch {output.correction_finished}
+		MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} --overWriteDirs --sample {wildcards.sample}
 		'''
 
-rule mip_barcode_correction:
-	input:
-		analysis_dir=nested_output+'/logs/extractFromRawLog.json'
-	resources:
-		nodes=10,
-		mem_mb=20000,
-		time_min=2400
-	output:
-		barcode_corrections_finished=nested_output+'/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
-	shell:
-		
-
-#sftp://mouse/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/D10-JJJ-44/D10-JJJ-44_mipExtraction/extractInfoSummary.txt
-
-
-#MIPWrangler mipCorrectForContamWithSameBarcodesMultiple --masterDir {params.output_dir} --numThreads {threads} --overWriteDirs --overWriteLog --logFile mipCorrectForContamWithSameBarcodes_run1
 rule correct_for_same_barcode_contam:
 	input:
-		expand('/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
+		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
+	params:
+		output_dir='/opt/analysis/analysis',
+		wrangler_dir=nested_output,
+		sif_file=config['miptools_sif'],
+	resources:
+		mem_mb=40000,
+		time_min=1440,
+		nodes=20
+	threads: 20
 	output:
 		#name is controlled by --logFile
-		corrected_barcode_marker='/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
+		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
+	shell:
+		'''
+		singularity exec \
+		-B {params.wrangler_dir}:/opt/analysis \
+		{params.sif_file} \
+		MIPWrangler mipCorrectForContamWithSameBarcodesMultiple --masterDir {params.output_dir} --numThreads {threads} --overWriteDirs --overWriteLog --logFile mipCorrectForContamWithSameBarcodes_run1
+		'''
 
 rule mip_clustering:
 	input:
-		corrected_barcode_marker='/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
+		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json',
+		#sample_dir=nested_output+'/analysis/{sample}'
+	params:
+		output_dir='/opt/analysis/analysis',
+		wrangler_dir=nested_output,
+		sif_file=config['miptools_sif']
+	resources:
+		mem_mb=16000,
+		time_min=60,
 	output:
-		mip_cluster_finished='/path/to/logs/{sample}/mip_clustering_finished.txt'
-	script:
-		'scripts/mip_clustering.py'
-
-#need to tell snakemake that target files (for rule below) have been generated somehow
+		mip_clustering=nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt'
+	shell:
+		'''
+		singularity exec \
+		-B {params.wrangler_dir}:/opt/analysis \
+		{params.sif_file} \
+		MIPWrangler mipClustering --masterDir {params.output_dir} --overWriteDirs --par /opt/resources/clustering_pars/illumina_collapseHomoploymers.pars.txt --countEndGaps --sample {wildcards.sample}
+		touch {output.mip_clustering}
+		'''
 
 rule pop_cluster_target:
 	input:
-		mip_cluster_files=expand(mip_cluster_finished='/path/to/logs/{sample}/mip_clustering_finished.txt', sample=[good_samples])
+		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
+	params:
+		output_dir='/opt/analysis/analysis',
+		wrangler_dir=nested_output,
+		sif_file=config['miptools_sif']
+	resources:
+		mem_mb=16000,
+		time_min=60,
 	output:
-		target_file='/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt.gz'
-	script:
-		'scripts/pop_cluster_target.py'
-
-rule output_final_table:
-	'''
-	cat together output files of previous step into a final file, do a "natural sort" to sort things similar to how Nick's are output
-	gzip it
-	'''
-	input:
-		target_file=expand('/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/output/analysis/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt.gz', target=config['targets'])
-#		final_sample_outputs=expand('/path/to/sample/outputs/{sample}.something', sample=sample_list)
-	output:
-		population_output='/path/to/final/allInfo.tab.txt'
-	script:
-		'scripts/output_table.py'
+		pop_clustered=nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt'
+	shell:
+		'''
+		singularity exec \
+		-B {params.wrangler_dir}:/opt/analysis \
+		{params.sif_file} \
+		MIPWrangler mipPopulationClustering --masterDir {params.output_dir} --overWriteDirs --cutoff 0 --countEndGaps --fraccutoff 0.005 --mipName {wildcards.target}
+		'''

@@ -14,16 +14,19 @@ rule all:
 
 rule copy_files:
 	input:
-		input_snakefile='wrangler_by_sample.smk',
+		setup_snakefile='setup_run.smk',
+		finish_snakefile='finish_run.smk',
 		input_configfile='wrangler_by_sample.yaml',
 		in_scripts='scripts'
 	output:
-		output_snakefile=nested_output+'/snakemake_params/wrangler_by_sample.smk',
+		setup_snakefile=nested_output+'/snakemake_params/setup_run.smk',
+		finish_snakefile=nested_output+'/snakemake_params/finish_run.smk',
 		output_configfile=nested_output+'/snakemake_params/wrangler_by_sample.yaml',
 		out_scripts=directory(nested_output+'/snakemake_params/scripts')
 	shell:
 		'''
-		cp {input.input_snakefile} {output.output_snakefile}
+		cp {input.setup_snakefile} {output.setup_snakefile}
+		cp {input.finish_snakefile} {output.finish_snakefile}
 		cp {input.input_configfile} {output.output_configfile}
 		cp -r {input.in_scripts} {output.out_scripts}
 		'''
@@ -59,10 +62,10 @@ rule setup_and_extract_by_arm:
 		sif_file=config['miptools_sif'],
 		fastq_dir=config['fastq_dir']
 	output:
-		extraction_finished=nested_output+'/logs/extractFromRawLog.json'
+		extraction_finished=nested_output+'/extraction_finished.txt'
 	threads: config['cpu_count']
 	resources:
-		nodes=30,
+		nodes=config['cpu_count'],
 		mem_mb=200000,
 		time_min=2400
 	shell:
@@ -73,17 +76,18 @@ rule setup_and_extract_by_arm:
 		-B {params.fastq_dir}:/opt/data \
 		{params.sif_file} \
 		MIPWrangler mipSetupAndExtractByArm --mipArmsFilename /opt/analysis/mip_ids/mipArms.txt --mipSampleFile /opt/analysis/mip_ids/allMipsSamplesNames.tab.txt --numThreads {threads} --masterDir {params.output_dir} --dir /opt/data --mipServerNumber 1 --minCaptureLength=30
+		touch {output.extraction_finished}
 		'''
 
 #optional: rule below checks for log file for each sample - might implement in
 #rule above so snakemake can track
 rule get_good_samples:
 	input:
-		extraction_finished=nested_output+'/logs/extractFromRawLog.json',
+		extraction_finished=nested_output+'/extraction_finished.txt',
 		sample_file=nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'
 	params:
 		nested_output=nested_output
 	output:
 		good_samples=nested_output+'/successfully_extracted_samples.txt'
-	scripts:
+	script:
 		'scripts/get_good_samples.py'
