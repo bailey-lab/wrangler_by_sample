@@ -1,0 +1,38 @@
+#folder where your output will go
+output_folder: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/tutorial_dataset
+
+#subfolder where wrangler analysis files will go
+analysis_dir: first_round
+
+#number of umis to include for each mip (higher expressed umis have a higher
+#chance of being included than lower expressed ones)
+umi_threshold: 200000000000000000
+
+#how many CPUs (or threads) to use in parallel - you can set this relatively low
+#(e.g. 10) because most of the intensive steps of this program are parallelized
+#across samples (i.e. 1000 parallel processes if you have 1,000 samples).
+cpu_count: 10
+
+#location of sample sheet
+input_sample_sheet: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/wrangler/sample_list.tsv
+
+#location of project resources
+project_resources: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/DR1_project_resources
+
+#location of input fastq file
+fastq_dir: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/test_data/fastq
+
+#location of sif file to use
+miptools_sif: /nfs/jbailey5/baileyweb/bailey_share/bin/miptools_dev_23-07-18.sif
+
+#probe sets to analyze from the sample sheet
+probe_sets_used: DR1
+
+#sample sets to analyze from the sample sheet
+sample_sets_used: JJJ
+
+#a name for the output files
+experiment_id: 230811
+
+#minimum size of haplotype to consider
+min_capture_length: 30

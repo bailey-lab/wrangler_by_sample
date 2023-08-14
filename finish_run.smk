@@ -96,3 +96,20 @@ rule pop_cluster_target:
 		MIPWrangler mipPopulationClustering --keepIntermediateFiles --masterDir {params.output_dir} --overWriteDirs --cutoff 0 --countEndGaps --fraccutoff 0.005 --mipName {wildcards.target}
 		touch {output.pop_clustering}
 		'''
+
+rule output_final_table:
+'''
+	cat together output files of previous step into a final file, do a "natural
+	sort" to sort things similar to how Nick's are output. gzip it
+'''
+	input:
+		pop_clustering=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
+#		final_sample_outputs=expand('/path/to/sample/outputs/{sample}.something', sample=sample_list)
+	params:
+		catting_prefix='/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/tutorial_dataset/first_round/analysis/populationClustering/',
+		catting_suffix='/analysis/selectedClustersInfo.tab.txt'
+	output:
+		population_output='/path/to/final/allInfo.tab.txt'
+	script:
+		'scripts/output_final_table.py'
+'''
