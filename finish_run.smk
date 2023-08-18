@@ -1,19 +1,47 @@
 configfile: 'wrangler_by_sample.yaml'
 nested_output=config['output_folder']+'/'+config['analysis_dir']
-good_samples=[line.strip() for line in open(nested_output+'/successfully_extracted_samples.txt')]
+
+all_samples=[]
+for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'):
+	line=line.strip().split('\t')
+	if len(line)>1 and len(line[1])>0:
+		all_samples.append(line[1])
+all_samples=all_samples[1:]
 all_targets=[line.strip().split('\t')[0] for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')][1:]
+
 rule all:
 	input:
-		pop_clustered=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
+		final_table=nested_output+'/allInfo.tab.gz'
+#		pop_clustered=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
 #		pop_clustered=expand(nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt', target=all_targets)
 #		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
 #		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
 #		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
 #		population_output='/path/to/final/allInfo.tab.txt'
 
+rule extract_by_arm:
+	input:
+	params:
+		output_dir='/opt/analysis/analysis',
+		wrangler_dir=nested_output,
+		sif_file=config['miptools_sif'],
+		fastq_dir=config['fastq_dir']
+	resources:
+		time_min=240
+	output:
+		nested_output+'/analysis/{sample}/{sample}_mipExtraction/log.txt'
+	shell:
+		'''
+		singularity exec \
+		-B {params.fastq_dir}:/opt/data \
+		-B {params.wrangler_dir}:/opt/analysis \
+		{params.sif_file} \
+		MIPWrangler mipExtractByArm --masterDir {params.output_dir} --sample {wildcards.sample} --overWriteDirs
+		'''
+
 rule mip_barcode_correction:
 	input:
-		good_samples=nested_output+'/successfully_extracted_samples.txt'
+		good_samples=expand(nested_output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
 		wrangler_dir=nested_output,
@@ -31,9 +59,11 @@ rule mip_barcode_correction:
 		MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} --overWriteDirs --sample {wildcards.sample}
 		'''
 
+
+
 rule correct_for_same_barcode_contam:
 	input:
-		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
+		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
 		wrangler_dir=nested_output,
@@ -78,7 +108,7 @@ rule mip_clustering:
 
 rule pop_cluster_target:
 	input:
-		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
+		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
 		wrangler_dir=nested_output,
@@ -98,18 +128,21 @@ rule pop_cluster_target:
 		'''
 
 rule output_final_table:
-'''
+	'''
 	cat together output files of previous step into a final file, do a "natural
 	sort" to sort things similar to how Nick's are output. gzip it
-'''
+	'''
 	input:
 		pop_clustering=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
 #		final_sample_outputs=expand('/path/to/sample/outputs/{sample}.something', sample=sample_list)
 	params:
-		catting_prefix='/nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/tutorial_dataset/first_round/analysis/populationClustering/',
-		catting_suffix='/analysis/selectedClustersInfo.tab.txt'
+		all_targets=all_targets,
+		prefix=nested_output+'/analysis/populationClustering/',
+		suffix='/analysis/selectedClustersInfo.tab.txt.gz'
+	resources:
+		mem_mb=50000,
+		time_min=480		
 	output:
-		population_output='/path/to/final/allInfo.tab.txt'
+		final_table=nested_output+'/allInfo.tab.gz'
 	script:
 		'scripts/output_final_table.py'
-'''

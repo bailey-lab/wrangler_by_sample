@@ -9,7 +9,8 @@ nested_output=config['output_folder']+'/'+config['analysis_dir']
 
 rule all:
 	input:
-		good_samples=nested_output+'/successfully_extracted_samples.txt',
+		setup_finished=nested_output+'/setup_finished.txt',
+#		good_samples=nested_output+'/successfully_extracted_samples.txt',
 		output_configfile=nested_output+'/snakemake_params/wrangler_by_sample.yaml'
 
 rule copy_files:
@@ -51,7 +52,7 @@ rule generate_mip_files:
 	script:
 		'scripts/generate_mip_files.py'
 
-rule setup_and_extract_by_arm:
+rule setup:
 	input:
 		mip_arms=nested_output+'/mip_ids/mipArms.txt',
 		sample_file=nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'
@@ -62,12 +63,8 @@ rule setup_and_extract_by_arm:
 		sif_file=config['miptools_sif'],
 		fastq_dir=config['fastq_dir']
 	output:
-		extraction_finished=nested_output+'/extraction_finished.txt'
+		setup_finished=nested_output+'/setup_finished.txt'
 	threads: config['cpu_count']
-	resources:
-		nodes=config['cpu_count'],
-		mem_mb=200000,
-		time_min=2400
 	shell:
 		'''
 		singularity exec \
@@ -75,19 +72,6 @@ rule setup_and_extract_by_arm:
 		-B {params.wrangler_dir}:/opt/analysis \
 		-B {params.fastq_dir}:/opt/data \
 		{params.sif_file} \
-		MIPWrangler mipSetupAndExtractByArm --mipArmsFilename /opt/analysis/mip_ids/mipArms.txt --mipSampleFile /opt/analysis/mip_ids/allMipsSamplesNames.tab.txt --numThreads {threads} --masterDir {params.output_dir} --dir /opt/data --mipServerNumber 1 --minCaptureLength=30
-		touch {output.extraction_finished}
+		MIPWrangler mipSetup --mipArmsFilename /opt/analysis/mip_ids/mipArms.txt --mipSampleFile /opt/analysis/mip_ids/allMipsSamplesNames.tab.txt --numThreads {threads} --masterDir {params.output_dir} --dir /opt/data --mipServerNumber 1
+		touch {output.setup_finished}
 		'''
-
-#optional: rule below checks for log file for each sample - might implement in
-#rule above so snakemake can track
-rule get_good_samples:
-	input:
-		extraction_finished=nested_output+'/extraction_finished.txt',
-		sample_file=nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'
-	params:
-		nested_output=nested_output
-	output:
-		good_samples=nested_output+'/successfully_extracted_samples.txt'
-	script:
-		'scripts/get_good_samples.py'
