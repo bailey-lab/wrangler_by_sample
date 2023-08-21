@@ -1,13 +1,14 @@
 configfile: 'wrangler_by_sample.yaml'
 nested_output=config['output_folder']+'/'+config['analysis_dir']
 
-all_samples=[]
-for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'):
-	line=line.strip().split('\t')
-	if len(line)>1 and len(line[1])>0:
-		all_samples.append(line[1])
-all_samples=all_samples[1:]
-all_targets=[line.strip().split('\t')[0] for line in open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')][1:]
+all_samples, all_targets=[],[]
+for line_number, line in enumerate(open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')):
+	if line_number>0:
+		line=line.rstrip().split('\t')
+		if len(line)>1 and len(line[1])>0:
+			all_samples.append(line[1])
+		if len(line[0])>0:
+			all_targets.append(line[0])
 
 rule all:
 	input:
