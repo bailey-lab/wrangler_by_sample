@@ -5,13 +5,13 @@ well as sample names that had extractable data.
 '''
 
 configfile: 'wrangler_by_sample.yaml'
-nested_output=config['output_folder']+'/'+config['analysis_dir']
+output=config['output_folder']
 
 rule all:
 	input:
-		setup_finished=nested_output+'/setup_finished.txt',
-#		good_samples=nested_output+'/successfully_extracted_samples.txt',
-		output_configfile=nested_output+'/snakemake_params/wrangler_by_sample.yaml'
+		setup_finished=output+'/setup_finished.txt',
+#		good_samples=output+'/successfully_extracted_samples.txt',
+		output_configfile=output+'/snakemake_params/wrangler_by_sample.yaml'
 
 rule copy_files:
 	input:
@@ -20,10 +20,10 @@ rule copy_files:
 		input_configfile='wrangler_by_sample.yaml',
 		in_scripts='scripts'
 	output:
-		setup_snakefile=nested_output+'/snakemake_params/setup_run.smk',
-		finish_snakefile=nested_output+'/snakemake_params/finish_run.smk',
-		output_configfile=nested_output+'/snakemake_params/wrangler_by_sample.yaml',
-		out_scripts=directory(nested_output+'/snakemake_params/scripts')
+		setup_snakefile=output+'/snakemake_params/setup_run.smk',
+		finish_snakefile=output+'/snakemake_params/finish_run.smk',
+		output_configfile=output+'/snakemake_params/wrangler_by_sample.yaml',
+		out_scripts=directory(output+'/snakemake_params/scripts')
 	shell:
 		'''
 		cp {input.setup_snakefile} {output.setup_snakefile}
@@ -46,24 +46,24 @@ rule generate_mip_files:
 		arms_file=config['project_resources']+'/mip_ids/mip_arms.txt',
 		sample_sheet=config['input_sample_sheet']
 	output:
-		mip_arms=nested_output+'/mip_ids/mipArms.txt',
-		sample_file=nested_output+'/mip_ids/allMipsSamplesNames.tab.txt',
-		sample_sheet=nested_output+'/sample_sheet.tsv'
+		mip_arms=output+'/mip_ids/mipArms.txt',
+		sample_file=output+'/mip_ids/allMipsSamplesNames.tab.txt',
+		sample_sheet=output+'/sample_sheet.tsv'
 	script:
 		'scripts/generate_mip_files.py'
 
 rule setup:
 	input:
-		mip_arms=nested_output+'/mip_ids/mipArms.txt',
-		sample_file=nested_output+'/mip_ids/allMipsSamplesNames.tab.txt'
+		mip_arms=output+'/mip_ids/mipArms.txt',
+		sample_file=output+'/mip_ids/allMipsSamplesNames.tab.txt'
 	params:
 		output_dir='/opt/analysis/analysis',
 		project_resources=config['project_resources'],
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif'],
 		fastq_dir=config['fastq_dir']
 	output:
-		setup_finished=nested_output+'/setup_finished.txt'
+		setup_finished=output+'/setup_finished.txt'
 	threads: config['cpu_count']
 	shell:
 		'''

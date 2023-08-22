@@ -1,8 +1,8 @@
 configfile: 'wrangler_by_sample.yaml'
-nested_output=config['output_folder']+'/'+config['analysis_dir']
+output=config['output_folder']
 
 all_samples, all_targets=[],[]
-for line_number, line in enumerate(open(nested_output+'/mip_ids/allMipsSamplesNames.tab.txt')):
+for line_number, line in enumerate(open(output+'/mip_ids/allMipsSamplesNames.tab.txt')):
 	if line_number>0:
 		line=line.rstrip().split('\t')
 		if len(line)>1 and len(line[1])>0:
@@ -12,25 +12,19 @@ for line_number, line in enumerate(open(nested_output+'/mip_ids/allMipsSamplesNa
 
 rule all:
 	input:
-		final_table=nested_output+'/allInfo.tab.gz'
-#		pop_clustered=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
-#		pop_clustered=expand(nested_output+'/analysis/populationClustering/{target}/analysis/selectedClustersInfo.tab.txt', target=all_targets)
-#		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=good_samples)
-#		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
-#		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=good_samples)
-#		population_output='/path/to/final/allInfo.tab.txt'
+		final_table=output+'/allInfo.tab.gz'
 
 rule extract_by_arm:
 	input:
 	params:
 		output_dir='/opt/analysis/analysis',
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif'],
 		fastq_dir=config['fastq_dir']
 	resources:
 		time_min=240
 	output:
-		nested_output+'/analysis/{sample}/{sample}_mipExtraction/log.txt'
+		output+'/analysis/{sample}/{sample}_mipExtraction/log.txt'
 	shell:
 		'''
 		singularity exec \
@@ -42,32 +36,34 @@ rule extract_by_arm:
 
 rule mip_barcode_correction:
 	input:
-		good_samples=expand(nested_output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
+		good_samples=expand(output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif']
+		downsample_seed=config['downsample_seed']
+		downsample_amount=config['downsample_umi_count']
 	resources:
-		mem_mb=20000,
+		mem_mb=config['memory_mb_per_step'],
 		time_min=20
 	output:
-		barcode_corrections_finished=nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
+		barcode_corrections_finished=output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
 	shell:
 		'''
 		singularity exec \
 		-B {params.wrangler_dir}:/opt/analysis \
 		{params.sif_file} \
-		MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} --overWriteDirs --sample {wildcards.sample}
+		MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} \
+		--downSampleAmount {params.downsample_amount} --downSampleSeed \
+		{params.downsample_seed} --overWriteDirs --sample {wildcards.sample}
 		'''
-
-
 
 rule correct_for_same_barcode_contam:
 	input:
-		all_corrected=expand(nested_output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=all_samples)
+		all_corrected=expand(output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif'],
 	resources:
 		mem_mb=40000,
@@ -76,7 +72,7 @@ rule correct_for_same_barcode_contam:
 	threads: 20
 	output:
 		#name is controlled by --logFile
-		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
+		corrected_barcode_marker=output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json'
 	shell:
 		'''
 		singularity exec \
@@ -94,7 +90,7 @@ rule mip_clustering:
 		wrangler_dir=nested_output,
 		sif_file=config['miptools_sif']
 	resources:
-		mem_mb=16000,
+		mem_mb=config['memory_mb_per_step'],
 		time_min=60,
 	output:
 		mip_clustering=nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt'
@@ -115,7 +111,7 @@ rule pop_cluster_target:
 		wrangler_dir=nested_output,
 		sif_file=config['miptools_sif']
 	resources:
-		mem_mb=16000,
+		mem_mb=config['memory_mb_per_step'],
 		time_min=60,
 	output:
 		pop_clustering=nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt'
@@ -141,7 +137,7 @@ rule output_final_table:
 		prefix=nested_output+'/analysis/populationClustering/',
 		suffix='/analysis/selectedClustersInfo.tab.txt.gz'
 	resources:
-		mem_mb=50000,
+		mem_mb=20000,
 		time_min=480		
 	output:
 		final_table=nested_output+'/allInfo.tab.gz'
