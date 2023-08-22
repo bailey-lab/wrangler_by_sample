@@ -40,8 +40,8 @@ rule mip_barcode_correction:
 	params:
 		output_dir='/opt/analysis/analysis',
 		wrangler_dir=output,
-		sif_file=config['miptools_sif']
-		downsample_seed=config['downsample_seed']
+		sif_file=config['miptools_sif'],
+		downsample_seed=config['downsample_seed'],
 		downsample_amount=config['downsample_umi_count']
 	resources:
 		mem_mb=config['memory_mb_per_step'],
