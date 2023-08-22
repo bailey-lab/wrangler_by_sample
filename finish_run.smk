@@ -83,17 +83,17 @@ rule correct_for_same_barcode_contam:
 
 rule mip_clustering:
 	input:
-		corrected_barcode_marker=nested_output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json',
-		#sample_dir=nested_output+'/analysis/{sample}'
+		corrected_barcode_marker=output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json',
+		#sample_dir=output+'/analysis/{sample}'
 	params:
 		output_dir='/opt/analysis/analysis',
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif']
 	resources:
 		mem_mb=config['memory_mb_per_step'],
 		time_min=60,
 	output:
-		mip_clustering=nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt'
+		mip_clustering=output+'/clustering_status/{sample}_mip_clustering_finished.txt'
 	shell:
 		'''
 		singularity exec \
@@ -105,16 +105,16 @@ rule mip_clustering:
 
 rule pop_cluster_target:
 	input:
-		mip_cluster_files=expand(nested_output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=all_samples)
+		mip_cluster_files=expand(output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=all_samples)
 	params:
 		output_dir='/opt/analysis/analysis',
-		wrangler_dir=nested_output,
+		wrangler_dir=output,
 		sif_file=config['miptools_sif']
 	resources:
 		mem_mb=config['memory_mb_per_step'],
 		time_min=60,
 	output:
-		pop_clustering=nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt'
+		pop_clustering=output+'/pop_clustering_status/{target}_pop_clustering_finished.txt'
 	shell:
 		'''
 		singularity exec \
@@ -130,16 +130,16 @@ rule output_final_table:
 	sort" to sort things similar to how Nick's are output. gzip it
 	'''
 	input:
-		pop_clustering=expand(nested_output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
+		pop_clustering=expand(output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
 #		final_sample_outputs=expand('/path/to/sample/outputs/{sample}.something', sample=sample_list)
 	params:
 		all_targets=all_targets,
-		prefix=nested_output+'/analysis/populationClustering/',
+		prefix=output+'/analysis/populationClustering/',
 		suffix='/analysis/selectedClustersInfo.tab.txt.gz'
 	resources:
 		mem_mb=20000,
 		time_min=480		
 	output:
-		final_table=nested_output+'/allInfo.tab.gz'
+		final_table=output+'/allInfo.tab.gz'
 	script:
 		'scripts/output_final_table.py'
