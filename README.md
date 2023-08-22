@@ -38,8 +38,8 @@ then you will be able to call it from the commandline with snakemake -s
 your_script.smk --profile your_profile_name. In the usage instructions below, we
 assume that you are using a slurm cluster, and that you put your file
 in ~/.config/snakemake/slurm/config.yaml, but on a non-cluster, these
-instructions will also work if you put your config file in ~/.config/snakemake/
-non_slurm/config.yaml and use --profile non_slurm
+instructions will also work if you put your config file in
+~/.config/snakemake/non_slurm/config.yaml and use --profile non_slurm
 
 ## Usage:
  - Download the contents of this git repo to a folder on your machine and cd
