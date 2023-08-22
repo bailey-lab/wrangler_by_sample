@@ -12,7 +12,7 @@ for line_number, line in enumerate(open(output+'/mip_ids/allMipsSamplesNames.tab
 
 rule all:
 	input:
-		final_table=output+'/allInfo.tab.gz'
+		final_table=output+'/allInfo.tsv.gz'
 
 rule extract_by_arm:
 	input:
@@ -140,6 +140,6 @@ rule output_final_table:
 		mem_mb=20000,
 		time_min=480		
 	output:
-		final_table=output+'/allInfo.tab.gz'
+		final_table=output+'/allInfo.tsv.gz'
 	script:
 		'scripts/output_final_table.py'
