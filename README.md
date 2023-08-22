@@ -29,12 +29,17 @@ conda create -c conda-forge -c bioconda -n snakemake snakemake
 ```
 
 Make sure you have a profile that matches the computer you'd like to run this
-on. Copy this profile into a folder. If you put the profile in
-~/.config/snakemake/your_profile_name/config.yaml, then you will be able to call
-it from the commandline with snakemake -s your_script.smk --profile your_
-profile_name. In the usage instructions below, we assume that you put your file
-in ~/.config/snakemake/slurm/config.yaml. An example slurm/config.yaml file is
-provided here for convenience.
+on. Example profiles are provided here for slurm clusters and for non_slurm
+standalone computers. You'll need to edit these profiles to be appropriate for
+the way that your system is currently configured (e.g. don't set memory or CPU
+requests that exceed your system's capacity). Copy this profile into a folder.
+If you put the profile in ~/.config/snakemake/your_profile_name/config.yaml,
+then you will be able to call it from the commandline with snakemake -s
+your_script.smk --profile your_profile_name. In the usage instructions below, we
+assume that you are using a slurm cluster, and that you put your file
+in ~/.config/snakemake/slurm/config.yaml, but on a non-cluster, these
+instructions will also work if you put your config file in ~/.config/snakemake/
+non_slurm/config.yaml and use --profile non_slurm
 
 ## Usage:
  - Download the contents of this git repo to a folder on your machine and cd
@@ -53,3 +58,5 @@ snakemake -s setup_run.smk --profile slurm
 ```bash
 snakemake -s finish_run.smk --profile slurm
 ```
+  - use --profile non_slurm if you are on a standalone computer (not a slurm
+cluster).
