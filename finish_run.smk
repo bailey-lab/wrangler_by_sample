@@ -31,7 +31,7 @@ rule extract_by_arm:
 		-B {params.fastq_dir}:/opt/data \
 		-B {params.wrangler_dir}:/opt/analysis \
 		{params.sif_file} \
-		MIPWrangler mipExtractByArm --masterDir {params.output_dir} --sample {wildcards.sample} --overWriteDirs
+		MIPWrangler mipExtractByArm --masterDir {params.output_dir} --sample {wildcards.sample} --overWriteDirs --minCaptureLength=30
 		'''
 
 rule mip_barcode_correction:
