@@ -114,7 +114,7 @@ rule pop_cluster_target:
 		mem_mb=config['memory_mb_per_step'],
 		time_min=60,
 	output:
-		pop_clustering=output+'/pop_clustering_status/{target}_pop_clustering_finished.txt'
+		pop_clustering=output+'/analysis/populationClustering/{target}/analysis/log.txt'
 	shell:
 		'''
 		singularity exec \
@@ -130,7 +130,7 @@ rule output_final_table:
 	sort" to sort things similar to how Nick's are output. gzip it
 	'''
 	input:
-		pop_clustering=expand(output+'/pop_clustering_status/{target}_pop_clustering_finished.txt', target=all_targets)
+		pop_clustering=expand(output+'/analysis/populationClustering/{target}/analysis/log.txt', target=all_targets)
 #		final_sample_outputs=expand('/path/to/sample/outputs/{sample}.something', sample=sample_list)
 	params:
 		all_targets=all_targets,
