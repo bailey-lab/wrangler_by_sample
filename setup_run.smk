@@ -72,6 +72,6 @@ rule setup:
 		-B {params.wrangler_dir}:/opt/analysis \
 		-B {params.fastq_dir}:/opt/data \
 		{params.sif_file} \
-		MIPWrangler mipSetup --mipArmsFilename /opt/analysis/mip_ids/mipArms.txt --mipSampleFile /opt/analysis/mip_ids/allMipsSamplesNames.tab.txt --numThreads {threads} --masterDir {params.output_dir} --dir /opt/data --mipServerNumber 1 --minCaptureLength=30
+		MIPWrangler mipSetup --mipArmsFilename /opt/analysis/mip_ids/mipArms.txt --mipSampleFile /opt/analysis/mip_ids/allMipsSamplesNames.tab.txt --numThreads {threads} --masterDir {params.output_dir} --dir /opt/data --mipServerNumber 1
 		touch {output.setup_finished}
 		'''
