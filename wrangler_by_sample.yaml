@@ -1,5 +1,5 @@
 #folder where your output will go.
-output_folder: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_by_sample_prototyping/sean_dataset
+output_folder: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/wrangler_by_sample
 
 #number of umis to include for each mip/sample combo. This keeps massively over-
 #sequenced stuff from bogging down the analysis. 20000 is default.
@@ -24,25 +24,25 @@ cpu_count: 10
 memory_mb_per_step: 20000
 
 #location of sample sheet
-input_sample_sheet: /nfs/jbailey5/baileyweb/svconnel/ZIM_repool/output_files/230730_merging/ZIM_V2.tsv
+input_sample_sheet: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/test_data/sample_list.tsv
 
 #location of project resources
-project_resources: /nfs/jbailey5/baileyweb/bailey_share/resources/MIP_project_resources/IBC2FULL
+project_resources: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/DR1_project_resources
 
 #location of input fastq file
-fastq_dir: /nfs/jbailey5/baileyweb/svconnel/ZIM_repool/output_files/230730_merging/mergedfastq
+fastq_dir: /nfs/jbailey5/baileyweb/asimkin/miptools/miptools_tutorial/test-data/test_data/fastq
 
 #location of sif file to use
-miptools_sif: /nfs/jbailey5/baileyweb/asimkin/miptools_dev_23-08-15.sif
+miptools_sif: /nfs/jbailey5/baileyweb/asimkin/miptools_dev_plus_bcl2fastq_23-08-22.sif
 
-#probe sets to analyze from the sample sheet
-probe_sets_used: IBC2FULL
+#probe sets to analyze from the sample sheet (not implemented yet)
+probe_sets_used: DR1
 
-#sample sets to analyze from the sample sheet
-sample_sets_used: R01ZIM2022
+#sample sets to analyze from the sample sheet (not implemented yet)
+sample_sets_used: JJJ
 
-#a name for the output files
+#a name for the output files (not implemented yet)
 experiment_id: 230816
 
-#minimum size of haplotype to consider
+#minimum size of haplotype to consider (not implemented yet)
 min_capture_length: 30
