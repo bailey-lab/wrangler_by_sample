@@ -45,6 +45,9 @@ rule generate_mip_files:
 	input:
 		arms_file=config['project_resources']+'/mip_ids/mip_arms.txt',
 		sample_sheet=config['input_sample_sheet']
+	params:
+		sample_set=config['sample_set_used'],
+		probe_sets=config['probe_sets_used']
 	output:
 		mip_arms=output+'/mip_ids/mipArms.txt',
 		sample_file=output+'/mip_ids/allMipsSamplesNames.tab.txt',
