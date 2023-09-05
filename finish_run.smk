@@ -33,30 +33,54 @@ rule extract_by_arm:
 		{params.sif_file} \
 		MIPWrangler mipExtractByArm --masterDir {params.output_dir} --sample {wildcards.sample} --overWriteDirs --minCaptureLength=30
 		'''
+if config['downsample_umi_count']<2**32:
+	rule mip_barcode_correction:
+		input:
+			good_samples=expand(output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
+		params:
+			output_dir='/opt/analysis/analysis',
+			wrangler_dir=output,
+			sif_file=config['miptools_sif'],
+			downsample_seed=config['downsample_seed'],
+			downsample_amount=config['downsample_umi_count']
+		resources:
+			mem_mb=config['memory_mb_per_step'],
+			time_min=20
+		output:
+			barcode_corrections_finished=output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
+		shell:
+			'''
+			singularity exec \
+			-B {params.wrangler_dir}:/opt/analysis \
+			{params.sif_file} \
+			MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} \
+			--downSampleAmount {params.downsample_amount} --downSampleSeed \
+			{params.downsample_seed} --overWriteDirs --sample {wildcards.sample}
+			'''
+else:
+	rule mip_barcode_correction:
+		input:
+			good_samples=expand(output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
+		params:
+			output_dir='/opt/analysis/analysis',
+			wrangler_dir=output,
+			sif_file=config['miptools_sif'],
+			downsample_seed=config['downsample_seed'],
+		resources:
+			mem_mb=config['memory_mb_per_step'],
+			time_min=20
+		output:
+			barcode_corrections_finished=output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
+		shell:
+			'''
+			singularity exec \
+			-B {params.wrangler_dir}:/opt/analysis \
+			{params.sif_file} \
+			MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} \
+			--doNotDownSample --downSampleSeed \
+			{params.downsample_seed} --overWriteDirs --sample {wildcards.sample}
+			'''
 
-rule mip_barcode_correction:
-	input:
-		good_samples=expand(output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples)
-	params:
-		output_dir='/opt/analysis/analysis',
-		wrangler_dir=output,
-		sif_file=config['miptools_sif'],
-		downsample_seed=config['downsample_seed'],
-		downsample_amount=config['downsample_umi_count']
-	resources:
-		mem_mb=config['memory_mb_per_step'],
-		time_min=20
-	output:
-		barcode_corrections_finished=output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt'
-	shell:
-		'''
-		singularity exec \
-		-B {params.wrangler_dir}:/opt/analysis \
-		{params.sif_file} \
-		MIPWrangler mipBarcodeCorrection --masterDir {params.output_dir} \
-		--downSampleAmount {params.downsample_amount} --downSampleSeed \
-		{params.downsample_seed} --overWriteDirs --sample {wildcards.sample}
-		'''
 
 rule correct_for_same_barcode_contam:
 	input:
