@@ -16,7 +16,7 @@ subprocess.call(f'cp {input_sample_sheet} {output_sample_sheet}', shell=True)
 arms_df=pd.read_table(arms_file)
 arms_df=arms_df[['mip_id', 'mip_family', 'extension_arm', 'ligation_arm', 'extension_barcode_length', 'ligation_barcode_length', 'gene_name', 'mipset']]
 arms_df.to_csv(mip_arms, index=False, sep='\t')
-sequenced_samples=[sample.split('.fastq')[0] for sample in os.listdir(input_fastq_folder)]
+sequenced_samples=[sample.split('_')[0] for sample in os.listdir(input_fastq_folder)]
 
 print('sequenced samples are', sequenced_samples)
 
