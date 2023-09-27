@@ -21,9 +21,8 @@ Install snakemake in an environment called snakemake with:
 mamba create -c conda-forge -c bioconda -n snakemake snakemake
 ```
 
-or (if you didn't install mambaforge) with
+or (if you didn't install mambaforge) with:
 
-Install snakemake in an environment called snakemake with:
 ```bash
 conda create -c conda-forge -c bioconda -n snakemake snakemake
 ```
