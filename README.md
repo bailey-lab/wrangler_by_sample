@@ -10,21 +10,16 @@ In both cases, If a run crashes, it doesn't have to be restarted from the
 beginning.
 
 ## Installation:
-Install conda (if you don't already have it) with:
+Install mamba with:
 [https://github.com/conda-forge/miniforge#mambaforge](https://github.com/conda-forge/miniforge#unix-like-platforms-mac-os--linux)
 
 This link will install a version of conda called 'mamba' that also includes
-conda.
+conda. Mamba manages snakemake versions better than conda so you should be
+using mamba.
 
 Install snakemake in an environment called snakemake with:
 ```bash
 mamba create -c conda-forge -c bioconda -n snakemake snakemake
-```
-
-or (if you didn't install mambaforge) with:
-
-```bash
-conda create -c conda-forge -c bioconda -n snakemake snakemake
 ```
 
 Make sure you have a profile that matches the computer you'd like to run this
@@ -40,15 +35,18 @@ in ~/.config/snakemake/slurm/config.yaml, but on a non-cluster, these
 instructions will also work if you put your config file in
 ~/.config/snakemake/non_slurm/config.yaml and use --profile non_slurm
 
-## Usage:
- - Download the contents of this git repo to a folder on your machine and cd
- into that folder (so that "ls" shows setup_run.smk and finish_run.smk).
- - Open the wrangler_by_sample.yaml file and fill in the variables using
+ - Download the contents of this git repo with:
+```bash
+git clone https://github.com/bailey-lab/miptools_analysis_no_jupyter.git
+```
+ - cd into the folder and open the yaml file (wrangler_by_sample.yaml) and fill in the variables using
 instructions from the comments
  - Activate snakemake with:
 ```bash
-conda activate snakemake
+mamba activate snakemake
 ```
+
+## Usage:
  - Run the first step with:
 ```bash
 snakemake -s setup_run.smk --profile slurm
