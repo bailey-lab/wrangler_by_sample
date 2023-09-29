@@ -54,4 +54,4 @@ sample_set_used: 2021-MSMT
 #4 (haplotype clustering for each sample)
 #5 (haplotype clustering for each mip)
 #6 (final output table)
-output_choice: 1
+output_choice: 6
