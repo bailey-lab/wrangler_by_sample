@@ -2,6 +2,7 @@ configfile: 'wrangler_by_sample.yaml'
 output=config['output_folder']
 
 all_samples, all_targets=[],[]
+
 for line_number, line in enumerate(open(output+'/mip_ids/allMipsSamplesNames.tab.txt')):
 	if line_number>0:
 		line=line.rstrip().split('\t')
@@ -10,9 +11,18 @@ for line_number, line in enumerate(open(output+'/mip_ids/allMipsSamplesNames.tab
 		if len(line[0])>0:
 			all_targets.append(line[0])
 
+final_dict={1: expand(output+'/analysis/{sample}/{sample}_mipExtraction/log.txt', sample=all_samples),
+			2: expand(output+'/analysis/{sample}/{sample}_mipBarcodeCorrection/barcodeFilterStats.tab.txt', sample=all_samples),
+			3: output+'/analysis/logs/mipCorrectForContamWithSameBarcodes_run1.json',
+			4: expand(output+'/clustering_status/{sample}_mip_clustering_finished.txt', sample=all_samples),
+			5: expand(output+'/analysis/populationClustering/{target}/analysis/log.txt', target=all_targets),
+			6: output+'/allInfo.tsv.gz'}
+output_choice=config['output_choice']
+final_out=final_dict[output_choice]
+
 rule all:
 	input:
-		final_table=output+'/allInfo.tsv.gz'
+		final_out
 
 rule extract_by_arm:
 	input:
