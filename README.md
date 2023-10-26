@@ -37,7 +37,7 @@ instructions will also work if you put your config file in
 
  - Download the contents of this git repo with:
 ```bash
-git clone https://github.com/bailey-lab/miptools_analysis_no_jupyter.git
+git clone https://github.com/bailey-lab/wrangler_by_sample.git
 ```
  - cd into the folder and open the yaml file (wrangler_by_sample.yaml) and fill in the variables using
 instructions from the comments
